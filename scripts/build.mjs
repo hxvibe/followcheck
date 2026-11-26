@@ -13,6 +13,10 @@ const bookmarklet = 'javascript:' + enc + 'void%200';
 const out = (p) => new URL('../' + p, import.meta.url);
 await mkdir(out('android/app/src/main/assets/'), { recursive: true });
 await writeFile(out('android/app/src/main/assets/followcheck.js'), code + '\n');
+// 아이폰 단축어 "웹 페이지에서 JavaScript 실행" 동작용: 끝에 completion() 호출 필수
+const shortcut = 'try{' + code + '}catch(e){}finally{typeof completion==="function"&&completion(true)}';
 await writeFile(out('docs/bookmarklet.js'),
-  '// 자동 생성 — npm run build\nwindow.FC_BOOKMARKLET=' + JSON.stringify(bookmarklet).replace(/</g, '\\u003c') + ';\n');
+  '// 자동 생성 — npm run build\n' +
+  'window.FC_BOOKMARKLET=' + JSON.stringify(bookmarklet).replace(/</g, '\\u003c') + ';\n' +
+  'window.FC_SHORTCUT=' + JSON.stringify(shortcut).replace(/</g, '\\u003c') + ';\n');
 console.log(`minified ${code.length} chars, bookmarklet ${bookmarklet.length} chars`);

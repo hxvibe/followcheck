@@ -8,6 +8,7 @@ const appCode = await read('android/app/src/main/assets/followcheck.js');
 const bmSrc = await read('docs/bookmarklet.js');
 const bookmarklet = JSON.parse(bmSrc.match(/FC_BOOKMARKLET=(".*");/)[1]);
 const bmCode = decodeURIComponent(bookmarklet.slice('javascript:'.length));
+const scCode = JSON.parse(bmSrc.match(/FC_SHORTCUT=(".*");/)[1]);
 
 const mk = (n) => ({ pk: n, username: 'user' + n, full_name: 'User ' + n, profile_pic_url: '', is_private: n % 7 === 0, is_verified: n === 1 });
 const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
@@ -132,6 +133,17 @@ const tabCounts = (w) => [...root(w).querySelectorAll('.tab')].map((t) => t.text
   root(w).querySelector('.more button').click();
   assert.equal(root(w).querySelectorAll('.list a.row').length, 400);
   console.log('ok  더 보기');
+}
+
+// 6) 아이폰 단축어 코드: completion() 호출 + 화면 표시
+{
+  let done = 0;
+  const dom = run('window.completion=()=>{window.__done=(window.__done||0)+1};' + scCode, range(1, 30), range(10, 40));
+  await until(() => root(dom.w).querySelector('.tabs'));
+  done = dom.w.__done;
+  assert.equal(done, 1);
+  assert.deepEqual(tabCounts(dom.w), ['나만 팔로우10', '상대만 팔로우9', '맞팔21']);
+  console.log('ok  아이폰 단축어 코드');
 }
 
 console.log('all passed');
