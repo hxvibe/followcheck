@@ -1,55 +1,77 @@
 # followcheck
 
-인스타그램 **맞팔 / 나만 팔로우 / 상대만 팔로우**를 확인하는 개인용 비공식 도구.
-데이터 내보내기나 비밀번호 입력 없이, 브라우저에서 instagram.com 에 로그인되어 있기만 하면 됩니다.
+인스타그램 **맞팔 / 나만 팔로우 / 상대만 팔로우**를 확인하는 개인용 웹앱.
+인스타그램 **아이디·비밀번호로 로그인**하면 서버가 인스타그램 앱(안드로이드)과 같은 방식의 비공식 모바일 API로
+팔로워·팔로잉 목록을 가져옵니다. 데이터 내보내기나 instagram.com 접속이 필요 없어요.
 
-- 서버 없음: 로그인된 브라우저 안에서 인스타 웹의 내부 API를 직접 호출하고, 결과도 그 기기 안에서만 처리
-- 아이폰 Safari / 안드로이드 Chrome / PC 모두 지원 (북마클릿)
-- 다시 실행하면 **변화** 탭에서 그 사이 나를 언팔한 사람·새 팔로워 표시
+- 2단계 인증(인증 앱·SMS), 보안 확인 코드(이메일·SMS) 입력 지원
+- 나만 팔로우 / 상대만 팔로우 / 맞팔 / **변화**(지난 확인 이후 나를 언팔한 사람·새 팔로워)
 - 검색, 아이디 목록 복사, CSV 저장
+- 화이트·블루 UI, 라이트/다크/시스템 테마, 홈 화면에 추가(PWA)
 
-## 사용법
+## 보안 설계
 
-1. GitHub Pages 를 켭니다: 저장소 **Settings → Pages → Source: Deploy from a branch → `main` / `/docs`**
-2. `https://<계정>.github.io/followcheck/` 접속 → 기기별 안내대로 북마클릿 설치
-3. 브라우저에서 instagram.com 로그인 → 북마크 `followcheck` 실행
+- 비밀번호는 로그인 요청에만 쓰이고 저장되지 않습니다.
+- 서버에는 아무것도 저장하지 않습니다(DB 없음). 로그인 세션은 `SECRET_KEY`로 암호화한 토큰으로 브라우저에만 보관됩니다.
+- 확인 결과도 브라우저(localStorage)에만 저장되고, 로그아웃하면 지워집니다.
+- `ACCESS_CODE`를 설정하면 그 코드를 아는 사람만 서버를 쓸 수 있습니다(공개 배포 시 권장).
 
-PC에서는 `docs/followcheck.min.js` 내용을 instagram.com 의 개발자 도구 콘솔에 붙여넣어도 됩니다.
+## 실행 방법
+
+### A. Render에 배포 (폰에서 어디서나)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/hxvibe/followcheck)
+
+1. 버튼 → Render 가입/로그인 → `ACCESS_CODE`에 원하는 비밀 코드 입력 → Apply
+2. 배포가 끝나면 `https://followcheck-xxxx.onrender.com` 접속
+3. 폰에서 열고 **홈 화면에 추가** (iPhone: 공유 → 홈 화면에 추가 / Android: ⋮ → 앱 설치)
+
+> 무료 플랜은 15분간 안 쓰면 잠들어서 첫 접속이 30초쯤 걸려요.
+> 해외 데이터센터 IP라 처음 로그인할 때 인스타그램이 **보안 확인 코드**(이메일/SMS)를 요구할 가능성이 높아요. 앱 화면에서 코드를 입력하면 됩니다.
+
+### B. 집 PC에서 실행 (가장 안전 — 평소 쓰는 IP)
+
+```bash
+pip install -r requirements.txt
+SECRET_KEY=아무-긴-문자열 uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+또는 Docker:
+
+```bash
+docker build -t followcheck .
+docker run -p 8000:8000 -e SECRET_KEY=아무-긴-문자열 followcheck
+```
+
+같은 와이파이의 폰에서 `http://<PC의 IP>:8000` 접속. 밖에서도 쓰려면 [Tailscale](https://tailscale.com) 같은 VPN을 쓰세요.
+
+### 환경 변수
+
+| 이름 | 설명 |
+|---|---|
+| `SECRET_KEY` | 세션 토큰 암호화 키. 없으면 서버 재시작 때마다 다시 로그인해야 함 |
+| `ACCESS_CODE` | (선택) 설정하면 로그인 화면에서 이 코드를 입력해야 사용 가능 |
+| `IG_PROXY` | (선택) 인스타 요청에 쓸 프록시. 예: `http://user:pass@host:port` (가정용 IP 프록시 권장) |
 
 ## 구조
 
 ```
-src/followcheck.js     원본 스크립트 (instagram.com 위에서 실행되는 오버레이)
-scripts/build.mjs      압축 → docs/ 에 북마클릿·콘솔용 코드 생성
-docs/index.html        설치 안내 페이지 (GitHub Pages)
-docs/bookmarklet.*     자동 생성물
-test/smoke.mjs         가짜 API로 jsdom 에서 전체 흐름 테스트
+app/main.py     FastAPI — API + 웹앱 정적 파일 제공
+app/ig.py       instagrapi 로그인/스캔 작업 (백그라운드 스레드, 코드 입력 대기, 요청 제한 대기)
+web/            프론트엔드 (바닐라 JS, PWA)
+tests/          가짜 인스타 클라이언트로 API 흐름 테스트 (pytest)
 ```
+
+API 흐름: `POST /api/login` → `GET /api/login/{job}` 폴링 (`need_code`면 `POST /api/login/{job}/code`) → 토큰 수신
+→ `POST /api/scan` → `GET /api/scan/{job}` 폴링 → 결과.
 
 ```bash
-npm install
-npm run build   # src 수정 후 docs/ 갱신
-npm test        # 빌드 + 스모크 테스트
+pip install -r requirements.txt pytest httpx
+python -m pytest -q
 ```
-
-## 동작 방식
-
-1. 쿠키 `ds_user_id` 로 내 계정 ID 확인, `/api/v1/users/{id}/info/` 로 팔로워·팔로잉 수 조회
-2. `/api/v1/friendships/{id}/followers/`, `/following/` 을 `next_max_id` 로 페이지네이션 (헤더 `X-IG-App-ID`)
-3. 실패하면 `/graphql/query/` (query_hash 방식) 으로 재시도
-4. 요청 사이 0.9–1.7초, 12페이지마다 5–8초 쉬고, 429 응답이면 1분씩 늘려가며 대기
-5. 결과 스냅샷(ID→아이디)을 instagram.com 의 localStorage 에 저장해 다음 실행 때 비교
-
-## 다른 구현 방법들 (참고)
-
-| 방법 | 연결 방식 | 모바일 | 비고 |
-|---|---|---|---|
-| **북마클릿 / 콘솔 스크립트** (이 저장소) | 브라우저의 인스타 로그인 세션 | ✅ | 서버·비밀번호 불필요. 가장 안전하고 간단 |
-| 브라우저 확장 프로그램 | 브라우저 로그인 세션 쿠키 | △ | PC 크롬 중심. iOS는 Safari 웹 확장(Xcode 빌드 필요) |
-| 비공식 Private API 서버 (instagrapi 등) | 아이디/비번 또는 `sessionid` 쿠키를 서버에 | ✅ (웹 UI) | 서버 필요. 데이터센터 IP·새 기기 로그인이라 체크포인트/정지 위험 큼 |
-| 네이티브 앱 + WebView 로그인 | 앱 내 WebView로 로그인 후 쿠키로 API 호출 | ✅ | 스토어 배포 어려움, 사이드로드/개인 빌드 |
-| 공식 Instagram Graph API | OAuth | — | 팔로워/팔로잉 **목록을 제공하지 않아** 불가 |
 
 ## 주의
 
-Instagram 과 무관한 비공식 도구입니다. 내부 API는 예고 없이 바뀔 수 있고, 너무 자주 실행하면 인스타가 일시적으로 요청을 제한할 수 있으니 하루 몇 번 정도만 사용하세요.
+Instagram과 무관한 비공식 도구입니다. 비공식 API 사용은 인스타그램 약관에 어긋나며,
+새 기기·새 IP 로그인이나 잦은 조회는 보안 확인, 일시 제한, 드물게 계정 제재로 이어질 수 있어요.
+하루 몇 번 정도만 확인하고, 가능하면 평소 쓰는 네트워크(B 방식)에서 실행하세요.
