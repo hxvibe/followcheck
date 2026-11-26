@@ -23,6 +23,10 @@
     user: store.get('user', true),
     access: store.get('access') || '',
     accessRequired: false,
+    // API 서버 주소. 비어 있으면 이 페이지와 같은 서버 (집 PC/Render에서 직접 열었을 때)
+    server: store.get('server') || '',
+    serverOk: false,
+    needServer: false,
     tab: 'notBack',
     q: '',
     limit: PAGE,
@@ -89,12 +93,35 @@
   }
   const alertBox = (msg, kind) => msg ? h('div', { class: 'alert' + (kind ? ' ' + kind : ''), role: 'alert' }, icon(kind === 'info' ? 'shield' : 'alert'), h('div', null, msg)) : null;
 
+  const apiUrl = (path) => (S.server ? S.server + '/' : '') + path;
+  const normServer = (v) => {
+    v = (v || '').trim().replace(/\/+$/, '');
+    if (v && !/^https?:\/\//i.test(v)) v = 'https://' + v;
+    return v;
+  };
+
+  // 서버 연결 확인 (+ 접근 코드 필요 여부)
+  async function probe() {
+    try {
+      const res = await fetch(apiUrl('api/config'), { cache: 'no-store' });
+      const d = await res.json();
+      if (!res.ok || typeof d.access_required !== 'boolean') throw new Error();
+      S.accessRequired = d.access_required;
+      S.serverOk = true;
+      S.needServer = false;
+    } catch (_) {
+      S.serverOk = false;
+      S.needServer = true;
+    }
+    return S.serverOk;
+  }
+
   async function api(path, opts = {}) {
     const headers = { 'Content-Type': 'application/json' };
     if (S.access) headers['X-Access-Code'] = S.access;
     let res;
     try {
-      res = await fetch(path, { method: opts.method || 'GET', headers, body: opts.body ? JSON.stringify(opts.body) : undefined, cache: 'no-store' });
+      res = await fetch(apiUrl(path), { method: opts.method || 'GET', headers, body: opts.body ? JSON.stringify(opts.body) : undefined, cache: 'no-store' });
     } catch (_) {
       const e = new Error('서버에 연결할 수 없어요. 인터넷 연결을 확인해 주세요.');
       e.network = true;
@@ -143,7 +170,7 @@
   function logout(message) {
     const keep = store.get('theme');
     try {
-      Object.keys(localStorage).filter((k) => k.startsWith('fc:') && k !== 'fc:theme' && k !== 'fc:access').forEach((k) => localStorage.removeItem(k));
+      Object.keys(localStorage).filter((k) => k.startsWith('fc:') && !['fc:theme', 'fc:access', 'fc:server'].includes(k)).forEach((k) => localStorage.removeItem(k));
     } catch (_) { /* ignore */ }
     store.set('theme', keep);
     S.token = null;
@@ -153,7 +180,7 @@
   }
 
   // ---------- 로그인 ----------
-  function showLogin(error, prefill) {
+  function showLogin(error, prefill, info) {
     S.poll++;
     const user = h('input', { class: 'input', id: 'u', name: 'username', autocomplete: 'username', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false', required: true, value: prefill || '' });
     const pw = h('input', { class: 'input', id: 'p', name: 'password', type: 'password', autocomplete: 'current-password', required: true });
@@ -164,13 +191,19 @@
       eye.replaceChildren(icon(show ? 'eye-off' : 'eye'));
       eye.setAttribute('aria-label', show ? '비밀번호 숨기기' : '비밀번호 보기');
     });
+    const showServer = S.needServer || !!S.server;
+    const serverIn = h('input', { class: 'input', id: 's', type: 'url', inputmode: 'url', autocomplete: 'url', autocapitalize: 'off', spellcheck: 'false', placeholder: 'https://followcheck-xxxx.onrender.com', value: S.server });
+    const server = showServer ? h('label', { class: 'field' }, h('span', null, '서버 주소'), serverIn,
+      h('small', { class: 'help' }, 'Render나 집 PC에서 실행 중인 followcheck 서버 주소')) : null;
     const access = S.accessRequired ? h('label', { class: 'field' }, h('span', null, '접근 코드'),
       h('input', { class: 'input', id: 'a', type: 'password', autocomplete: 'off', value: S.access, required: true })) : null;
     const btn = h('button', { class: 'btn block', type: 'submit' }, '로그인');
     const errSlot = h('div', null, alertBox(error));
 
     const form = h('form', { class: 'card', novalidate: true },
+      alertBox(info, 'info'),
       errSlot,
+      server,
       access,
       h('label', { class: 'field' }, h('span', null, '인스타그램 아이디'), user),
       h('label', { class: 'field' }, h('span', null, '비밀번호'), h('div', { class: 'input-wrap' }, pw, eye)),
@@ -181,23 +214,42 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (access) { S.access = access.querySelector('input').value.trim(); store.set('access', S.access); }
+      if (server) {
+        const v = normServer(serverIn.value);
+        if (!v) { errSlot.replaceChildren(alertBox('서버 주소를 입력해 주세요.')); serverIn.focus(); return; }
+        if (v !== S.server) { S.server = v; S.serverOk = false; store.set('server', v); }
+      }
       if (!user.value.trim() || !pw.value) {
         errSlot.replaceChildren(alertBox('아이디와 비밀번호를 입력해 주세요.'));
         (user.value.trim() ? pw : user).focus();
         return;
       }
+      const reset = () => { btn.disabled = false; btn.textContent = '로그인'; };
       btn.disabled = true;
-      btn.replaceChildren(h('span', { class: 'spinner', 'aria-hidden': 'true' }), '로그인 중…');
       errSlot.replaceChildren();
+      if (!S.serverOk) {
+        btn.replaceChildren(h('span', { class: 'spinner', 'aria-hidden': 'true' }), '서버 연결 중…');
+        const hadAccess = !!access;
+        if (!(await probe())) {
+          reset();
+          errSlot.replaceChildren(alertBox('서버에 연결할 수 없어요. 주소를 확인해 주세요. 무료 서버는 잠들어 있으면 깨어나는 데 30초~1분 걸려요.'));
+          return;
+        }
+        if (S.accessRequired && !hadAccess) {
+          return showLogin(null, user.value.trim(), '이 서버는 접근 코드가 필요해요.');
+        }
+      }
+      btn.replaceChildren(h('span', { class: 'spinner', 'aria-hidden': 'true' }), '로그인 중…');
       try {
         const { job } = await api('api/login', { method: 'POST', body: { username: user.value.trim(), password: pw.value } });
         pollLogin(job, user.value.trim());
       } catch (err) {
-        btn.disabled = false;
-        btn.textContent = '로그인';
+        reset();
+        if (err.status === 403) S.serverOk = false;
         errSlot.replaceChildren(alertBox(err.message));
       }
     });
+    form.addEventListener('input', () => { form.dataset.dirty = '1'; }, { once: true });
 
     render(
       h('section', { class: 'hero' },
@@ -209,7 +261,10 @@
           h('div', { class: 'feature' }, icon('users'), h('b', null, '상대만 팔로우'), '나만 안 한 사람'),
           h('div', { class: 'feature' }, icon('history'), h('b', null, '변화 추적'), '언팔한 사람'))),
       form);
-    setTimeout(() => (prefill ? pw : user).focus({ preventScroll: true }), 50);
+    setTimeout(() => {
+      const target = server && !S.server ? serverIn : access && !S.access ? access.querySelector('input') : prefill ? pw : user;
+      target.focus({ preventScroll: true });
+    }, 50);
   }
 
   async function pollLogin(job, username) {
@@ -538,8 +593,17 @@
 
   // ---------- 시작 ----------
   (async () => {
-    try { S.accessRequired = !!(await api('api/config')).access_required; } catch (_) { /* 오프라인 */ }
-    if (!S.token) return showLogin();
+    if (!S.token) {
+      // 로그인 화면을 먼저 띄우고, 서버 확인 결과에 따라 필요하면 다시 그림 (입력 중이면 그대로 둠)
+      showLogin();
+      await probe();
+      const form = $app.querySelector('form');
+      const shown = { server: !!$app.querySelector('#s'), access: !!$app.querySelector('#a') };
+      const want = { server: S.needServer || !!S.server, access: S.accessRequired };
+      if (form && !form.dataset.dirty && (shown.server !== want.server || shown.access !== want.access)) showLogin();
+      return;
+    }
+    probe();
     const job = store.get('scanjob');
     if (job) return pollScan(job);
     showHome();

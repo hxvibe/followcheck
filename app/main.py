@@ -18,6 +18,7 @@ from typing import Optional
 
 from cryptography.fernet import Fernet, InvalidToken
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -27,7 +28,7 @@ from . import ig
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("followcheck")
 
-WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+WEB_DIR = Path(__file__).resolve().parent.parent / "docs"
 
 _secret = os.environ.get("SECRET_KEY")
 if not _secret:
@@ -38,6 +39,17 @@ ACCESS_CODE = os.environ.get("ACCESS_CODE", "")
 
 jobs = ig.JobStore()
 app = FastAPI(title="followcheck", docs_url=None, redoc_url=None, openapi_url=None)
+
+# GitHub Pages(https://hxvibe.github.io/followcheck/)에 올린 화면에서 이 서버를 부를 수 있게 허용
+ALLOWED_ORIGINS = [o.strip().rstrip("/") for o in
+                   os.environ.get("ALLOWED_ORIGINS", "https://hxvibe.github.io").split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "X-Access-Code"],
+    max_age=600,
+)
 
 
 # ---------- 공통 ----------

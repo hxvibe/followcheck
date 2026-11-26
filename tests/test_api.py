@@ -167,3 +167,13 @@ def test_access_code(monkeypatch):
     assert client.post("/api/login", json={"username": "me", "password": "pw"}).status_code == 403
     r = client.post("/api/login", json={"username": "me", "password": "pw"}, headers={"X-Access-Code": "secret"})
     assert r.status_code == 200
+
+
+def test_cors_for_github_pages():
+    r = client.options("/api/login", headers={
+        "Origin": "https://hxvibe.github.io", "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type,x-access-code"})
+    assert r.status_code == 200
+    assert r.headers["access-control-allow-origin"] == "https://hxvibe.github.io"
+    r = client.options("/api/login", headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "POST"})
+    assert "access-control-allow-origin" not in r.headers

@@ -18,12 +18,17 @@
 
 ## 실행 방법
 
+화면(`docs/`)은 GitHub Pages **https://hxvibe.github.io/followcheck/** 에서도 열립니다.
+인스타 로그인·조회는 서버가 해야 하므로, 아래 A나 B로 서버를 하나 띄운 뒤
+Pages 화면의 **서버 주소** 칸에 그 주소를 넣으면 됩니다. (서버 주소로 직접 접속해도 같은 화면이 나와요.)
+
 ### A. Render에 배포 (폰에서 어디서나)
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/hxvibe/followcheck)
 
 1. 버튼 → Render 가입/로그인 → `ACCESS_CODE`에 원하는 비밀 코드 입력 → Apply
 2. 배포가 끝나면 `https://followcheck-xxxx.onrender.com` 접속
+   (또는 GitHub Pages 화면의 서버 주소 칸에 이 주소 입력)
 3. 폰에서 열고 **홈 화면에 추가** (iPhone: 공유 → 홈 화면에 추가 / Android: ⋮ → 앱 설치)
 
 > 무료 플랜은 15분간 안 쓰면 잠들어서 첫 접속이 30초쯤 걸려요.
@@ -43,7 +48,8 @@ docker build -t followcheck .
 docker run -p 8000:8000 -e SECRET_KEY=아무-긴-문자열 followcheck
 ```
 
-같은 와이파이의 폰에서 `http://<PC의 IP>:8000` 접속. 밖에서도 쓰려면 [Tailscale](https://tailscale.com) 같은 VPN을 쓰세요.
+같은 와이파이의 폰에서 `http://<PC의 IP>:8000` 으로 **직접** 접속하세요.
+(GitHub Pages는 https라서 http 서버 주소는 브라우저가 막아요.) 밖에서도 쓰려면 [Tailscale](https://tailscale.com) 같은 VPN을 쓰세요.
 
 ### 환경 변수
 
@@ -51,6 +57,7 @@ docker run -p 8000:8000 -e SECRET_KEY=아무-긴-문자열 followcheck
 |---|---|
 | `SECRET_KEY` | 세션 토큰 암호화 키. 없으면 서버 재시작 때마다 다시 로그인해야 함 |
 | `ACCESS_CODE` | (선택) 설정하면 로그인 화면에서 이 코드를 입력해야 사용 가능 |
+| `ALLOWED_ORIGINS` | (선택) 이 서버를 부를 수 있는 다른 웹 주소. 기본값 `https://hxvibe.github.io` |
 | `IG_PROXY` | (선택) 인스타 요청에 쓸 프록시. 예: `http://user:pass@host:port` (가정용 IP 프록시 권장) |
 
 ## 구조
@@ -58,7 +65,7 @@ docker run -p 8000:8000 -e SECRET_KEY=아무-긴-문자열 followcheck
 ```
 app/main.py     FastAPI — API + 웹앱 정적 파일 제공
 app/ig.py       instagrapi 로그인/스캔 작업 (백그라운드 스레드, 코드 입력 대기, 요청 제한 대기)
-web/            프론트엔드 (바닐라 JS, PWA)
+docs/           프론트엔드 (바닐라 JS, PWA) — 서버가 직접 제공 + GitHub Pages 배포
 tests/          가짜 인스타 클라이언트로 API 흐름 테스트 (pytest)
 ```
 

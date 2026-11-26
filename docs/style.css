@@ -222,3 +222,4 @@ h2 { font-size: 18px; letter-spacing: -0.01em; margin: 0 0 4px; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   .spinner { animation-duration: 1.2s !important; }
 }
+.help { display: block; font-size: 13px; color: var(--text-2); margin: 6px 0 0 2px; }
