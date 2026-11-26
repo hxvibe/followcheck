@@ -1,4 +1,0 @@
-fastapi>=0.115
-uvicorn[standard]>=0.30
-instagrapi==3.2.22
-cryptography>=42

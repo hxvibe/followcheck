@@ -1,0 +1,46 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+
+      - name: Publish to release "android"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk followcheck.apk
+          if ! gh release view android -R "$REPO" >/dev/null 2>&1; then
+            gh release create android -R "$REPO" --target "$GITHUB_SHA" \
+              --title "followcheck 안드로이드 앱" \
+              --notes "폰에서 followcheck.apk 를 내려받아 설치하세요. 새 버전이 올라오면 같은 방법으로 덮어 설치하면 업데이트돼요."
+          fi
+          gh release upload android followcheck.apk -R "$REPO" --clobber

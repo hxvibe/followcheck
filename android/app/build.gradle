@@ -1,0 +1,39 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'io.github.hxvibe.followcheck'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'io.github.hxvibe.followcheck'
+        minSdk 24
+        targetSdk 34
+        // GitHub Actions 실행 번호로 버전 증가 → 새 APK를 덮어 설치(업데이트) 가능
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as Integer)
+        versionName '2.0.' + (System.getenv('GITHUB_RUN_NUMBER') ?: '0')
+    }
+
+    // 개인용 고정 서명 키 (항상 같은 키로 서명해야 업데이트 설치가 됨)
+    signingConfigs {
+        release {
+            storeFile rootProject.file('followcheck.keystore')
+            storePassword 'followcheck'
+            keyAlias 'followcheck'
+            keyPassword 'followcheck'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

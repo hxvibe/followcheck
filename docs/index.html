@@ -3,22 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>followcheck</title>
-  <meta name="description" content="인스타그램 맞팔 확인">
+  <title>followcheck — 인스타 맞팔 확인</title>
+  <meta name="description" content="인스타그램 맞팔·나만 팔로우·상대만 팔로우를 바로 확인">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#f5f7fb" id="theme-color">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="followcheck">
-  <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="style.css">
   <script>
-    // 테마를 첫 페인트 전에 적용 (깜빡임 방지)
     (function () {
       var t = 'system';
       try { t = localStorage.getItem('fc:theme') || 'system'; } catch (e) {}
@@ -29,40 +23,192 @@
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <symbol id="i-swap" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4M20 7H4m4 14-4-4 4-4M4 17h16"/></symbol>
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
     <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
     <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
-    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
-    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c4.97 0 8.53 3.5 9.94 6.65a1 1 0 0 1 0 .7 10.75 10.75 0 0 1-1.44 2.49M14.08 14.16a3 3 0 0 1-4.24-4.24M17.48 17.5A10.75 10.75 0 0 1 2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 4.45-5.14"/><path d="m2 2 20 20"/></symbol>
-    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
-    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
-    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
     <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
-    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
-    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
-    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
-    <symbol id="i-verified" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
-    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></symbol>
     <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
     <symbol id="i-user-x" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 8 5 5M22 8l-5 5"/></symbol>
     <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
-    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
-    <symbol id="i-party" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
   </svg>
 
   <header class="appbar" id="appbar">
     <div class="appbar-in">
       <div class="brand"><span class="mark"><svg class="icon"><use href="#i-swap"/></svg></span>followcheck</div>
       <button class="icon-btn" id="theme-btn" type="button" aria-label="테마 변경"><svg class="icon"><use href="#i-monitor"/></svg></button>
-      <button class="icon-btn" id="logout-btn" type="button" aria-label="로그아웃" hidden><svg class="icon"><use href="#i-logout"/></svg></button>
     </div>
   </header>
 
-  <main id="app" aria-live="polite"></main>
+  <main>
+    <section class="hero">
+      <div class="mark"><svg class="icon"><use href="#i-swap"/></svg></div>
+      <h1>맞팔, 한 번에 확인</h1>
+      <p class="lead">서버 설정도, 데이터 내보내기도 필요 없어요.<br>인스타그램에 로그인만 하면 바로 보여드려요.</p>
+      <div class="features">
+        <div class="feature"><svg class="icon"><use href="#i-user-x"/></svg><b>나만 팔로우</b>맞팔 안 한 사람</div>
+        <div class="feature"><svg class="icon"><use href="#i-users"/></svg><b>상대만 팔로우</b>나만 안 한 사람</div>
+        <div class="feature"><svg class="icon"><use href="#i-history"/></svg><b>변화 추적</b>나를 언팔한 사람</div>
+      </div>
+    </section>
+
+    <h2>설치</h2>
+    <div class="seg" role="tablist" aria-label="기기 선택">
+      <button role="tab" type="button" data-p="android" aria-selected="false">안드로이드</button>
+      <button role="tab" type="button" data-p="ios" aria-selected="false">아이폰</button>
+      <button role="tab" type="button" data-p="pc" aria-selected="false">PC</button>
+    </div>
+
+    <!-- 안드로이드: 앱 -->
+    <section class="panel" id="p-android" hidden>
+      <div class="card">
+        <a class="btn block" id="apk" href="https://github.com/hxvibe/followcheck/releases/download/android/followcheck.apk">
+          <svg class="icon"><use href="#i-download"/></svg>앱 다운로드 (APK)
+        </a>
+        <span class="btn-sub">약 30KB · 서버 없이 폰에서 인스타그램과 직접 통신해요</span>
+        <ol class="steps">
+          <li><strong>다운로드</strong>
+            <span class="muted">"유해할 수 있는 파일" 경고가 뜨면 <kbd>그래도 다운로드</kbd>.</span></li>
+          <li><strong>설치</strong>
+            <span class="muted">다운로드한 파일을 열고, "출처를 알 수 없는 앱" 허용을 켠 뒤 <kbd>설치</kbd>. Play 프로텍트 경고가 뜨면 <kbd>세부정보 → 무시하고 설치</kbd>.</span></li>
+          <li><strong>앱 열고 인스타그램 로그인</strong>
+            <span class="muted">앱 안에 인스타그램 공식 로그인 화면이 나와요. 로그인하면 맞팔 확인 화면이 자동으로 열려요. 2단계 인증도 그대로 돼요.</span></li>
+        </ol>
+        <div class="callout"><svg class="icon"><use href="#i-shield"/></svg>
+          <div>비밀번호는 인스타그램 공식 로그인 화면에만 입력돼요. 이 앱은 따로 저장하거나 어디에도 보내지 않아요.</div></div>
+      </div>
+    </section>
+
+    <!-- 아이폰: 북마크 -->
+    <section class="panel" id="p-ios" hidden>
+      <div class="card">
+        <h3>Safari 북마크로 실행</h3>
+        <p class="muted small">아이폰은 앱스토어 밖 앱 설치가 막혀 있어서, Safari 북마크 하나로 같은 화면을 띄워요. 처음 한 번만 설정하면 돼요.</p>
+        <button class="btn block copy-bm" type="button"><svg class="icon"><use href="#i-copy"/></svg>북마크 코드 복사</button>
+        <ol class="steps">
+          <li><strong>이 페이지를 북마크에 추가</strong>
+            <span class="muted">하단 <kbd>공유</kbd> → <kbd>북마크 추가</kbd> → 이름을 <code>followcheck</code> 로 저장.</span></li>
+          <li><strong>북마크 주소를 코드로 바꾸기</strong>
+            <span class="muted"><kbd>북마크(책 아이콘)</kbd> → <kbd>편집</kbd> → <code>followcheck</code> → 주소 칸을 모두 지우고 복사한 코드 붙여넣기 → <kbd>완료</kbd>.</span></li>
+          <li><strong>Safari로 instagram.com 열고 로그인</strong>
+            <span class="muted">링크가 인스타 앱으로 열리면 주소창에 직접 <code>instagram.com</code> 입력.</span></li>
+          <li><strong>북마크 실행</strong>
+            <span class="muted">주소창을 누르고 <code>followcheck</code> 입력 → 아래 뜨는 <b>북마크 항목</b>을 탭 (엔터 X). 맞팔 확인 화면이 열려요.</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- PC -->
+    <section class="panel" id="p-pc" hidden>
+      <div class="card">
+        <h3>북마크바에 끌어다 놓기</h3>
+        <p class="muted small">북마크바가 안 보이면 <kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>. instagram.com 에 로그인한 상태에서 클릭하면 열려요.</p>
+        <div class="row"><a class="btn drag" id="drag" href="#" title="북마크바로 드래그하세요"><svg class="icon"><use href="#i-swap"/></svg>followcheck</a></div>
+        <p class="muted small" style="margin-top:12px">드래그가 안 되면 아무 페이지나 북마크한 뒤 주소를 아래 코드로 바꿔 주세요.</p>
+        <button class="btn ghost copy-bm" type="button"><svg class="icon"><use href="#i-copy"/></svg>북마크 코드 복사</button>
+      </div>
+    </section>
+
+    <details>
+      <summary>북마크 코드 직접 보기</summary>
+      <textarea id="code" readonly aria-label="북마크 코드"></textarea>
+    </details>
+
+    <h2>주의</h2>
+    <div class="callout warn"><svg class="icon"><use href="#i-alert"/></svg>
+      <div>인스타그램 공식 기능이 아닌 비공식 도구예요.
+        <ul>
+          <li>하루에 몇 번 정도만 확인하세요. 너무 자주 하면 인스타가 잠시 요청을 막을 수 있어요.</li>
+          <li>팔로워가 많으면 계정 보호를 위해 일부러 천천히(수 분) 불러와요.</li>
+          <li>결과는 이 기기에만 저장돼요. 어떤 서버로도 보내지 않아요.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>안 될 때</h2>
+    <details><summary>APK 설치가 막혀요</summary>
+      <p>설정 → 앱 → 특별한 접근(또는 보안) → "출처를 알 수 없는 앱 설치"에서 다운로드에 쓴 앱(Chrome, 내 파일 등)을 허용하세요. 삼성은 "자동 차단기"가 켜져 있으면 잠시 꺼야 해요.</p></details>
+    <details><summary>앱 업데이트는 어떻게 해요?</summary>
+      <p>같은 다운로드 버튼으로 새 APK를 받아 설치하면 덮어써져요. 로그인과 지난 결과는 그대로 남아요.</p></details>
+    <details><summary>“로그인이 필요해요”가 떠요</summary>
+      <p>아이폰/PC는 앱이 아니라 브라우저(Safari/Chrome)에서 instagram.com 에 로그인되어 있어야 해요. 로그인 후 새로고침하고 다시 실행하세요.</p></details>
+    <details><summary>“요청이 너무 많다”가 떠요</summary>
+      <p>인스타가 잠시 막은 상태예요. 30분~몇 시간 쉬었다가 다시 시도하세요. 몇 번은 자동으로 기다렸다 이어서 진행해요.</p></details>
+    <details><summary>갑자기 안 돼요</summary>
+      <p>인스타그램 내부 방식이 바뀌면 멈출 수 있어요. 새 버전이 올라오면 앱은 다시 설치, 북마크는 코드를 다시 붙여넣으면 돼요.</p></details>
+
+    <footer>followcheck · 개인용 비공식 도구 · Instagram과 무관합니다</footer>
+  </main>
   <div class="toast" id="toast" role="status"></div>
 
-  <script src="app.js"></script>
+  <script src="bookmarklet.js"></script>
+  <script>
+  (function () {
+    var BM = window.FC_BOOKMARKLET || '';
+    var drag = document.getElementById('drag');
+    drag.href = BM;
+    drag.addEventListener('click', function (e) { e.preventDefault(); toast('클릭 말고 북마크바로 끌어다 놓으세요'); });
+    document.getElementById('code').value = BM;
+
+    var toastEl = document.getElementById('toast'), tid;
+    function toast(m) {
+      toastEl.textContent = m; toastEl.classList.add('on');
+      clearTimeout(tid); tid = setTimeout(function () { toastEl.classList.remove('on'); }, 2200);
+    }
+    function copy(text, msg) {
+      function fallback() {
+        var ta = document.getElementById('code');
+        ta.closest('details').open = true;
+        ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
+        var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+        toast(ok ? msg : '자동 복사가 안 돼요 — 아래 칸을 길게 눌러 전체 복사하세요');
+      }
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function () { toast(msg); }, fallback);
+      else fallback();
+    }
+    document.querySelectorAll('.copy-bm').forEach(function (b) {
+      b.addEventListener('click', function () { copy(BM, '복사됐어요! 북마크 주소에 붙여넣으세요'); });
+    });
+
+    // 기기별 탭
+    var ua = navigator.userAgent;
+    var isIOS = /iP(hone|ad|od)/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    var def = isIOS ? 'ios' : /Android/.test(ua) ? 'android' : 'pc';
+    function show(p) {
+      document.querySelectorAll('.seg button').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.p === p)); });
+      document.querySelectorAll('.panel').forEach(function (s) { s.hidden = s.id !== 'p-' + p; });
+    }
+    document.querySelectorAll('.seg button').forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.p); }); });
+    show(def);
+
+    // 테마
+    var btn = document.getElementById('theme-btn'), mq = matchMedia('(prefers-color-scheme: dark)');
+    function apply() {
+      var t = 'system';
+      try { t = localStorage.getItem('fc:theme') || 'system'; } catch (e) {}
+      var dark = t === 'dark' || (t === 'system' && mq.matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      document.getElementById('theme-color').setAttribute('content', dark ? '#0a0f1a' : '#f5f7fb');
+      btn.querySelector('use').setAttribute('href', '#i-' + (t === 'dark' ? 'moon' : t === 'light' ? 'sun' : 'monitor'));
+      var label = { system: '시스템 설정', light: '라이트 모드', dark: '다크 모드' }[t];
+      btn.setAttribute('aria-label', '테마: ' + label + ' (눌러서 변경)');
+      return label;
+    }
+    btn.addEventListener('click', function () {
+      var order = ['system', 'light', 'dark'], cur = 'system';
+      try { cur = localStorage.getItem('fc:theme') || 'system'; } catch (e) {}
+      try { localStorage.setItem('fc:theme', order[(order.indexOf(cur) + 1) % 3]); } catch (e) {}
+      toast(apply());
+    });
+    mq.addEventListener('change', apply);
+    apply();
+
+    var bar = document.getElementById('appbar');
+    addEventListener('scroll', function () { bar.classList.toggle('scrolled', scrollY > 4); }, { passive: true });
+  })();
+  </script>
 </body>
 </html>
